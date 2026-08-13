@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { key: 'belangganan', label: 'Berlangganan', icon: Gem, path: '/berlangganan' },
   { key: 'list', label: 'List', icon: List, path: '/list' },
   { key: 'profile', label: 'Profile', icon: UserCircle, path: '/profile' },
