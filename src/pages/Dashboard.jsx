@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuccessDialogV2 } from '@/components/SuccesDialogV2';
+import Chart from 'react-apexcharts';
 
 import { getUserGroups } from '@/service/groupService';
-import Swal from 'sweetalert2'
+import Swal from 'sweetalert2';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
 import JoinGroupDialog from '@/components/JoinGroupDialog';
 
@@ -47,6 +48,20 @@ const Dashboard = () => {
     fetchGroups();
   }, [user?.uid]);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   const formatCurrency = (value) =>
     new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -68,6 +83,184 @@ const Dashboard = () => {
     setSuccessDialogOpen(true);
     await fetchGroups();
   };
+
+  const formatChartValue = (value) => {
+    const number = Number(value);
+
+    if (number >= 1_000_000_000_000) {
+      return `${(number / 1_000_000_000_000).toFixed(1).replace('.0', '')}T`;
+    }
+
+    if (number >= 1_000_000_000) {
+      return `${(number / 1_000_000_000).toFixed(1).replace('.0', '')}M`;
+    }
+
+    if (number >= 1_000_000) {
+      return `${(number / 1_000_000).toFixed(1).replace('.0', '')}JT`;
+    }
+
+    if (number >= 1_000) {
+      return `${(number / 1_000).toFixed(1).replace('.0', '')}K`;
+    }
+
+    return number.toString();
+  };
+
+  const donutChartOptions = {
+    chart: {
+      type: 'donut',
+    },
+
+    labels: groups.map((group) => group.name),
+
+    colors: ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899'],
+
+    // Hilangkan nama group + titik warna di bawah
+    legend: {
+      show: false,
+    },
+
+    dataLabels: {
+      enabled: true,
+      formatter: (value) => `${value.toFixed(0)}%`,
+    },
+
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+
+          labels: {
+            show: true,
+
+            name: {
+              show: true,
+              fontSize: '14px',
+              fontWeight: 500,
+              offsetY: -5,
+            },
+
+            value: {
+              show: true,
+              fontSize: '18px',
+              fontWeight: 500,
+              offsetY: 5,
+
+              formatter: (value) => {
+                return `Rp ${Number(value).toLocaleString('id-ID')}`;
+              },
+            },
+
+            total: {
+              show: true,
+              label: 'Total Saldo',
+
+              formatter: (w) => {
+                const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+
+                return `Rp ${Number(total).toLocaleString('id-ID')}`;
+              },
+            },
+          },
+        },
+      },
+    },
+
+    tooltip: {
+      y: {
+        formatter: (value) => {
+          return `Rp ${Number(value).toLocaleString('id-ID')}`;
+        },
+      },
+    },
+  };
+
+  const donutChartSeries = groups.map((group) => Number(group.balance) || 0);
+
+  const chartOptions = {
+    chart: {
+      type: 'bar',
+      toolbar: {
+        show: false,
+      },
+      fontFamily: 'inherit',
+      dropShadow: {
+        enabled: true,
+        top: 2,
+        left: 0,
+        blur: 4,
+        opacity: 0.08,
+      },
+    },
+
+    plotOptions: {
+      bar: {
+        borderRadius: 8,
+        columnWidth: '45%',
+        distributed: false,
+      },
+    },
+
+    colors: ['#10b981'],
+
+    dataLabels: {
+      enabled: false,
+    },
+
+    xaxis: {
+      categories: groups.map((group) => group.name),
+      labels: {
+        style: {
+          colors: '#6b7280',
+          fontSize: '12px',
+        },
+      },
+      axisBorder: {
+        show: false,
+      },
+      axisTicks: {
+        show: false,
+      },
+    },
+
+    yaxis: {
+      labels: {
+        style: {
+          colors: '#6b7280',
+          fontSize: '12px',
+        },
+        formatter: (value) => formatChartValue(value),
+      },
+    },
+
+    tooltip: {
+      y: {
+        formatter: (value) => `Rp ${Number(value).toLocaleString('id-ID')}`,
+      },
+    },
+
+    grid: {
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      yaxis: {
+        lines: { show: true },
+      },
+      xaxis: {
+        lines: { show: false },
+      },
+    },
+  };
+
+  // Lebar minimum per bar (px) — sesuaikan biar bar gak keliatan sempit/bergerombol
+  const MIN_BAR_WIDTH = 70;
+  const chartWidth = Math.max(groups.length * MIN_BAR_WIDTH, 100);
+
+  const chartSeries = [
+    {
+      name: 'Saldo',
+      data: groups.map((group) => Number(group.balance) || 0),
+    },
+  ];
 
   return (
     <>
@@ -103,6 +296,16 @@ const Dashboard = () => {
             + Buat Group
           </Button>
         </div>
+      </div>
+
+      <div className=" w-full overflow-x-auto rounded-xl border border-neutral-100 bg-white p-2">
+        <Chart
+          key={isMobile ? 'mobile' : 'desktop'}
+          options={isMobile ? donutChartOptions : chartOptions}
+          series={isMobile ? donutChartSeries : chartSeries}
+          type={isMobile ? 'donut' : 'bar'}
+          height={isMobile ? 320 : 280}
+        />
       </div>
 
       {/* Error Alert */}

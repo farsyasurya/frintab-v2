@@ -28,6 +28,15 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
 
   const [error, setError] = useState('');
 
+  const handleTotalChange = (event) => {
+    const value = event.target.value.replace(/\D/g, '');
+
+    setForm((prev) => ({
+      ...prev,
+      total: value ? Number(value) : 0,
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -118,16 +127,13 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
 
               <Input
                 id="transaction-total"
-                type="number"
+                name="total"
+                type="text"
+                inputMode="numeric"
                 min="1"
-                placeholder="100000"
-                value={form.total}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    total: event.target.value,
-                  }))
-                }
+                placeholder="masukkan nominal"
+                value={form.total ? Number(form.total).toLocaleString('id-ID') : ''}
+                onChange={handleTotalChange}
                 disabled={loading}
                 className="h-10 border-emerald-200/80 bg-emerald-50/60 text-stone-800 font-bold placeholder:font-normal placeholder:text-stone-400 transition-all duration-200 focus-visible:bg-white focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/40 disabled:opacity-50"
                 required

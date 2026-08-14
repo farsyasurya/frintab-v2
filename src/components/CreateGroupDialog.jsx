@@ -51,6 +51,15 @@ const CreateGroupDialog = ({ open, onOpenChange, onSuccess }) => {
     }));
   };
 
+  const handleTargetChange = (event) => {
+    const value = event.target.value.replace(/\D/g, '');
+
+    setForm((prev) => ({
+      ...prev,
+      target: value ? Number(value) : 0,
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -277,15 +286,14 @@ const CreateGroupDialog = ({ open, onOpenChange, onSuccess }) => {
               <Label htmlFor="group-target" className="text-xs font-bold text-emerald-900">
                 Target Tabungan (Rp)
               </Label>
-
               <Input
                 id="group-target"
                 name="target"
-                type="number"
-                min="1"
-                placeholder="5000000"
-                value={form.target}
-                onChange={handleChange}
+                type="text"
+                inputMode="numeric"
+                placeholder="5.000.000"
+                value={form.target ? Number(form.target).toLocaleString('id-ID') : ''}
+                onChange={handleTargetChange}
                 disabled={loading}
                 className="h-10 border-emerald-200/80 bg-emerald-50/60 text-stone-800 placeholder:text-stone-400 transition-all duration-200 focus-visible:bg-white focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/40"
                 required
