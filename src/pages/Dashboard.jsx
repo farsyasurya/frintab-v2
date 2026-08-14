@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SuccessDialogV2 } from '@/components/SuccesDialogV2';
 
 import { getUserGroups } from '@/service/groupService';
-
+import Swal from 'sweetalert2'
 import CreateGroupDialog from '@/components/CreateGroupDialog';
 import JoinGroupDialog from '@/components/JoinGroupDialog';
 
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [joinGroupOpen, setJoinGroupOpen] = useState(false);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [successGroup, setSuccessGroup] = useState(false);
 
   const fetchGroups = async () => {
     if (!user?.uid) return;
@@ -58,7 +60,7 @@ const Dashboard = () => {
   };
 
   const handleCreateSuccess = async (result) => {
-    console.log('Group berhasil dibuat:', result);
+    setSuccessGroup(true);
     await fetchGroups();
   };
 
@@ -241,22 +243,8 @@ const Dashboard = () => {
       <CreateGroupDialog open={createGroupOpen} onOpenChange={setCreateGroupOpen} onSuccess={handleCreateSuccess} />
       <JoinGroupDialog open={joinGroupOpen} onOpenChange={setJoinGroupOpen} onSuccess={handleJoinSuccess} />
 
-      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
-        <DialogContent className="rounded-2xl border border-stone-100 bg-white p-6 text-center shadow-xl sm:max-w-xs">
-          <DialogHeader className="items-center space-y-2">
-            <div className="flex h-8 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">🎉</div>
-            <DialogTitle className="text-lg font-bold text-stone-800">Berhasil Bergabung!</DialogTitle>
-          </DialogHeader>
-          <DialogFooter className="mt-4 sm:justify-center">
-            <Button
-              onClick={() => setSuccessDialogOpen(false)}
-              className="w-full bg-emerald-600 font-semibold text-white hover:bg-emerald-700 active:scale-95"
-            >
-              Oke
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SuccessDialogV2 open={successDialogOpen} onOpenChange={setSuccessDialogOpen} teks="Berhasil Bergabung!" />
+      <SuccessDialogV2 open={successGroup} onOpenChange={setSuccessGroup} teks="Berhasil Membuat Group!" />
     </>
   );
 };

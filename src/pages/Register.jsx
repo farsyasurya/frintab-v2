@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SuccessDialogV2 } from '@/components/SuccesDialogV2';
 
 const initialForm = {
   name: '',
@@ -26,7 +27,7 @@ const Register = () => {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
   const handleChange = ({ target: { name, value } }) => {
     setForm((prev) => ({
@@ -89,7 +90,7 @@ const Register = () => {
         password: form.password,
       });
 
-      setSuccess('Registrasi berhasil! Mengalihkan ke halaman login...');
+      setSuccessDialogOpen(true);
 
       setTimeout(() => {
         navigate('/login');
@@ -104,11 +105,6 @@ const Register = () => {
 
   return (
     <>
-      {success && (
-        <Alert className="mb-5 border-emerald-300 bg-emerald-50 text-emerald-900 animate-in fade-in-0 slide-in-from-top-1">
-          <AlertDescription className="text-sm font-semibold">{success}</AlertDescription>
-        </Alert>
-      )}
       <main className="relative flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-emerald-800 via-emerald-600 to-teal-800 p-4 sm:p-6 lg:p-8 antialiased selection:bg-amber-300 selection:text-emerald-950">
         {/* Layer Efek Aksen Warna & Glow Ambient Full-Width */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -289,6 +285,7 @@ const Register = () => {
           </CardContent>
         </Card>
       </main>
+      <SuccessDialogV2 open={successDialogOpen} onOpenChange={setSuccessDialogOpen} teks="Berhasil Registrasi!" />
     </>
   );
 };
