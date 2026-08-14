@@ -11,7 +11,12 @@ import {
   signOut,
 } from 'firebase/auth';
 
-import { auth } from '@/lib/firebase';
+import {
+  doc,
+  getDoc,
+} from 'firebase/firestore';
+
+import { auth, db } from '@/lib/firebase';
 
 const AuthContext = createContext(null);
 
@@ -22,9 +27,57 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
       auth,
-      (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
+      async (currentUser) => {
+        if (!currentUser) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Ambil profile dari Firestore
+          const userRef = doc(
+            db,
+            'users',
+            currentUser.uid
+          );
+
+          const userSnapshot = await getDoc(userRef);
+
+          const profile = userSnapshot.exists()
+            ? userSnapshot.data()
+            : {};
+
+          // Gabungkan Firebase Auth + Firestore
+          setUser({
+            ...currentUser,
+            ...profile,
+
+            // pastikan UID tetap dari Auth
+            uid: currentUser.uid,
+
+            // email dari Firestore jika ada,
+            // fallback ke Firebase Auth
+            email:
+              profile.email ||
+              currentUser.email,
+
+            // foto
+            photoURL:
+              profile.photoURL ||
+              currentUser.photoURL,
+          });
+        } catch (error) {
+          console.error(
+            'Get user profile error:',
+            error
+          );
+
+          // fallback kalau Firestore gagal
+          setUser(currentUser);
+        } finally {
+          setLoading(false);
+        }
       }
     );
 

@@ -1,27 +1,17 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
+import packageJson from '../../package.json';
 
 import { getPendingTransactions } from '@/service/transactionService';
 
-import {
-  LayoutDashboard,
-  List,
-  UserCircle,
-  Search,
-  HelpCircle,
-  Bell,
-  Menu,
-  LogOut,
-  ChevronDown,
-  Sprout,
-  Gem,
-} from 'lucide-react';
+import { LayoutDashboard, List, UserCircle, Search, HelpCircle, Bell, Menu, LogOut, ChevronDown, Sprout, Gem } from 'lucide-react';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { key: 'belangganan', label: 'Berlangganan', icon: Gem, path: '/berlangganan' },
-  { key: 'list', label: 'List', icon: List, path: '/list' },
+  // { key: 'belangganan', label: 'Berlangganan', icon: Gem, path: '/berlangganan' },
+  { key: 'pengajuan-me', label: 'Pengajuan Saya', icon: List, path: '/pengajuan-me' },
+  { key: 'notifications', label: 'Notifikasi', icon: Bell, path: '/notifications' },
   { key: 'profile', label: 'Profile', icon: UserCircle, path: '/profile' },
 ];
 
@@ -76,9 +66,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-neutral-100">
       {/* Overlay untuk sidebar mobile */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Sidebar */}
       <aside
@@ -89,12 +77,17 @@ const DashboardLayout = () => {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex items-center gap-2 px-6 py-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400">
-              <Sprout className="h-5 w-5 text-emerald-950" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100">
+              <img src="/frintab.png" alt="Logo" className="h-12 w-12" />
             </div>
-            <span className="text-lg font-bold text-white">
-              Tabungan<span className="text-amber-400">Ku</span>
-            </span>
+
+            <div className="flex flex-col">
+              <span className="text-lg font-bold leading-tight text-white">
+                FRIN<span className="text-amber-400">TAB</span>
+              </span>
+
+              <span className="mt-1 text-[10px] text-emerald-200/60">v{packageJson.version}</span>
+            </div>
           </div>
 
           {/* Nav */}
@@ -181,13 +174,8 @@ const DashboardLayout = () => {
 
             {/* User dropdown */}
             <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-neutral-100"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
-                  {initial}
-                </div>
+              <button onClick={() => setUserMenuOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-neutral-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">{initial}</div>
                 <span className="hidden max-w-[100px] truncate text-sm font-medium text-neutral-700 md:block">
                   {user?.displayName || user?.email || 'User'}
                 </span>

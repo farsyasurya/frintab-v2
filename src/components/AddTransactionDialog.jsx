@@ -150,7 +150,7 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
                     date: event.target.value,
                   }))
                 }
-                disabled={loading}
+                disabled
                 className="h-10 border-emerald-200/80 bg-emerald-50/60 text-stone-800 transition-all duration-200 focus-visible:bg-white focus-visible:border-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400/40 disabled:opacity-50"
                 required
               />

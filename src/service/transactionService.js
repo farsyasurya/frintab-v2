@@ -11,6 +11,7 @@ import {
   startAfter,
   endBefore,
   limitToLast,
+  collectionGroup
 } from 'firebase/firestore';
 const PAGE_SIZE = 5;
 
@@ -512,4 +513,27 @@ export const getTransactionHistory = async ({ groupId, cursor = null, direction 
     lastDoc: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null,
     hasMore: snapshot.docs.length === PAGE_SIZE,
   };
+};
+
+export const getMyTransactionRequests = async (
+  uid
+) => {
+  if (!uid) {
+    throw new Error('User belum login.');
+  }
+
+  const transactionQuery = query(
+    collectionGroup(db, 'transactions'),
+    where('userId', '==', uid),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
+
+  const snapshot =
+    await getDocs(transactionQuery);
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };

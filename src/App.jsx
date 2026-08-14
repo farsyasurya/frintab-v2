@@ -6,6 +6,8 @@ import Dashboard from '@/pages/Dashboard';
 import GroupDetail from '@/pages/GroupDetail';
 import Notifications from '@/pages/Notifications';
 import DashboardLayout from '@/components/DashboardLayout';
+import PengajuanMe from '@/pages/PengajuanMe';
+import Profile from '@/pages/Profile';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -28,26 +30,42 @@ function App() {
               </ProtectedRoute>
             }
           />
-        
 
-        <Route
-          path="/groups/:groupId"
-          element={
-            <ProtectedRoute>
-              <GroupDetail />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/groups/:groupId"
+            element={
+              <ProtectedRoute>
+                <GroupDetail />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <Notifications />
-            </ProtectedRoute>
-          }
-        />
-         </Route>
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pengajuan-me"
+            element={
+              <ProtectedRoute>
+                <PengajuanMe />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

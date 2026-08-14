@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell, Check, Loader2, X } from 'lucide-react';
+import { Bell, Check, Loader2, X, ArrowLeft } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { getPendingTransactions, approveTransaction, rejectTransaction } from '@/service/transactionService';
@@ -7,9 +7,11 @@ import { getPendingTransactions, approveTransaction, rejectTransaction } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 
 const Notifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +102,15 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-white p-4 md:p-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/')}
+        className="mb-3 -ml-2 text-neutral-500 hover:bg-emerald-50 hover:text-emerald-700"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Kembali
+      </Button>
       <div className="mx-auto max-w-3xl">
         {/* HEADER */}
         <div className="mb-6 flex items-center gap-3">
