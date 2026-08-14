@@ -298,15 +298,17 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className=" w-full overflow-x-auto rounded-xl border border-neutral-100 bg-white p-2">
-        <Chart
-          key={isMobile ? 'mobile' : 'desktop'}
-          options={isMobile ? donutChartOptions : chartOptions}
-          series={isMobile ? donutChartSeries : chartSeries}
-          type={isMobile ? 'donut' : 'bar'}
-          height={isMobile ? 320 : 280}
-        />
-      </div>
+      {groups?.length > 0 && (
+        <div className="w-full overflow-x-auto rounded-xl border border-neutral-100 bg-white p-2">
+          <Chart
+            key={isMobile ? 'mobile' : 'desktop'}
+            options={isMobile ? donutChartOptions : chartOptions}
+            series={isMobile ? donutChartSeries : chartSeries}
+            type={isMobile ? 'donut' : 'bar'}
+            height={isMobile ? 320 : 280}
+          />
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
