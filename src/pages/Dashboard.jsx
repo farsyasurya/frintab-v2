@@ -13,6 +13,7 @@ import { getUserGroups } from '@/service/groupService';
 import Swal from 'sweetalert2';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
 import JoinGroupDialog from '@/components/JoinGroupDialog';
+import DashboardLove from '@/components/DashboardLove';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -262,73 +263,52 @@ const Dashboard = () => {
     },
   ];
 
+   const isSpecialUser = user?.uid === 'sExbRFMPzIgQPhDAmhIT3eFSEkl1';
+
+    if (isSpecialUser) {
+    return (
+      <DashboardLove
+        user={user}
+        groups={groups}
+        loading={loading}
+        error={error}
+        isMobile={isMobile}
+        chartOptions={chartOptions}
+        chartSeries={chartSeries}
+        donutChartOptions={donutChartOptions}
+        donutChartSeries={donutChartSeries}
+        getProgress={getProgress}
+        formatCurrency={formatCurrency}
+        navigate={navigate}
+        createGroupOpen={createGroupOpen}
+        setCreateGroupOpen={setCreateGroupOpen}
+        joinGroupOpen={joinGroupOpen}
+        setJoinGroupOpen={setJoinGroupOpen}
+        handleCreateSuccess={handleCreateSuccess}
+        handleJoinSuccess={handleJoinSuccess}
+        successDialogOpen={successDialogOpen}
+        setSuccessDialogOpen={setSuccessDialogOpen}
+        successGroup={successGroup}
+        setSuccessGroup={setSuccessGroup}
+      />
+    );
+  }
+
   return (
     <>
       {/* Welcome */}
       <div className="mb-6 flex flex-col gap-4 rounded-xl border border-emerald-100 bg-white/80 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full">
-          {user?.uid === 'Q1mKAj01OgRW0nrXHFzN8x0fI3i1' ? (
-            <div className="relative overflow-hidden rounded-2xl border border-pink-200 bg-gradient-to-r from-pink-50 via-rose-50 to-pink-100 px-5 py-4 shadow-sm">
-              {/* Animated moving gradient glow */}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-pink-300/20 via-fuchsia-300/20 to-pink-300/20 bg-[length:200%_100%] animate-[gradientMove_4s_ease-in-out_infinite]" />
+        <div>
+          <div className="inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Dashboard Overview</p>
+          </div>
 
-              {/* Floating hearts */}
-              <span className="pointer-events-none absolute left-6 top-2 text-pink-400/70 animate-bounce [animation-duration:2.2s]">💗</span>
-              <span className="pointer-events-none absolute right-10 top-4 text-rose-400/70 animate-bounce [animation-duration:1.8s] [animation-delay:0.3s]">
-                💕
-              </span>
-              <span className="pointer-events-none absolute right-24 bottom-2 text-pink-300/70 animate-bounce [animation-duration:2.5s] [animation-delay:0.6s]">
-                💞
-              </span>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-neutral-800 sm:text-2xl">
+            Selamat datang, <span className="text-emerald-600">{user?.displayName || user?.email || 'User'}</span> 👋
+          </h1>
 
-              {/* Badge */}
-              <div className="relative inline-flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-pink-500" />
-                </span>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-500">Dashboard Overview</p>
-              </div>
-
-              {/* Animated gradient heading */}
-              <h1 className="relative mt-1 text-xl font-bold tracking-tight sm:text-2xl">
-                <span className="text-neutral-800">Selamat datang Sayangg</span> <span className="animate-pulse"></span>
-                <br className="sm:hidden" />
-                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-500 bg-[length:200%_auto] bg-clip-text text-transparent animate-[gradientMove_3s_linear_infinite]">
-                  {user?.displayName || user?.email || 'User'}
-                </span>
-              </h1>
-
-              <p className="relative mt-1 text-xs text-pink-400">Kelola tabungan bersama kamu di satu tempat 🌸</p>
-
-              <style jsx>{`
-                @keyframes gradientMove {
-                  0% {
-                    background-position: 0% 50%;
-                  }
-                  50% {
-                    background-position: 100% 50%;
-                  }
-                  100% {
-                    background-position: 0% 50%;
-                  }
-                }
-              `}</style>
-            </div>
-          ) : (
-            <div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Dashboard Overview</p>
-              </div>
-
-              <h1 className="mt-1 text-xl font-bold tracking-tight text-neutral-800 sm:text-2xl">
-                Selamat datang, <span className="text-emerald-600">{user?.displayName || user?.email || 'User'}</span> 👋
-              </h1>
-
-              <p className="mt-1 text-xs text-neutral-500">Kelola tabungan bersama kamu di satu tempat.</p>
-            </div>
-          )}
+          <p className="mt-1 text-xs text-neutral-500">Kelola tabungan bersama kamu di satu tempat.</p>
         </div>
 
         <div className="flex gap-2.5">
