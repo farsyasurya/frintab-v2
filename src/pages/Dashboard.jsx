@@ -263,7 +263,7 @@ const Dashboard = () => {
     },
   ];
 
-   const isSpecialUser = user?.uid === 'sExbRFMPzIgQPhDAmhIT3eFSEkl1';
+   const isSpecialUser = user?.uid === 'Q1mKAj01OgRW0nrXHFzN8x0fI3i1';
 
     if (isSpecialUser) {
     return (
