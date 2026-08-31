@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowDownLeft, Clock, CheckCircle2, XCircle, Loader2 , ArrowLeft} from 'lucide-react';
+import { ArrowDownLeft, Clock, CheckCircle2, XCircle, Loader2, ArrowLeft, Calendar, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import  {Button} from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { getMyTransactionRequests } from '@/service/transactionService';
@@ -11,7 +11,30 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const PengajuanMe = () => {
   const { user } = useAuth();
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
+  // Hitung default 7 hari lalu untuk input date HTML (Format YYYY-MM-DD)
+  const getDefaultDates = () => {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    return {
+      since: sevenDaysAgo.toISOString().split('T')[0],
+      until: today.toISOString().split('T')[0],
+    };
+  };
+
+  const defaultDates = getDefaultDates();
+  
+  // State untuk form input sementara (belum trigger fetch)
+  const [tempSince, setTempSince] = useState(defaultDates.since);
+  const [tempUntil, setTempUntil] = useState(defaultDates.until);
+
+  // State aktif yang benar-benar dipakai untuk query ke Firestore
+  const [activeSince, setActiveSince] = useState(defaultDates.since);
+  const [activeUntil, setActiveUntil] = useState(defaultDates.until);
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,21 +46,28 @@ const navigate = useNavigate();
       setLoading(true);
       setError('');
 
-      const data = await getMyTransactionRequests(user.uid);
+      // Menggunakan state activeSince dan activeUntil
+      const data = await getMyTransactionRequests(user.uid, activeSince, activeUntil);
 
       setRequests(data);
     } catch (error) {
       console.error('Get my requests error:', error);
-
       setError(error.message || 'Gagal mengambil daftar pengajuan.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Hanya fetch ulang saat tombol "Terapkan" diklik (activeSince/activeUntil berubah) atau user berganti
   useEffect(() => {
     fetchRequests();
-  }, [user?.uid]);
+  }, [user?.uid, activeSince, activeUntil]);
+
+  // Handler tombol Terapkan Filter
+  const handleApplyFilter = () => {
+    setActiveSince(tempSince);
+    setActiveUntil(tempUntil);
+  };
 
   const formatCurrency = (value) => {
     return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
@@ -82,17 +112,6 @@ const navigate = useNavigate();
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="flex items-center gap-2 text-sm text-neutral-500">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Memuat pengajuan...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto w-full max-w-4xl">
       <Button
@@ -104,11 +123,42 @@ const navigate = useNavigate();
         <ArrowLeft className="mr-2 h-4 w-4" />
         Kembali
       </Button>
-      {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-neutral-900">Pengajuan Saya</h1>
+      
+      {/* HEADER & FILTER */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-neutral-900">Pengajuan Saya</h1>
+          <p className="mt-1 text-sm text-neutral-500">Riwayat pengajuan transaksi yang kamu buat.</p>
+        </div>
 
-        <p className="mt-1 text-sm text-neutral-500">Riwayat pengajuan transaksi yang kamu buat.</p>
+        {/* INPUT SINCE & UNTIL DENGAN TOMBOL TERAPKAN */}
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200 bg-white p-2 shadow-sm">
+          <Calendar className="h-4 w-4 text-neutral-400" />
+          <div className="flex items-center gap-1.5 text-xs text-neutral-600">
+            <input
+              type="date"
+              value={tempSince}
+              onChange={(e) => setTempSince(e.target.value)}
+              className="rounded border border-neutral-200 px-1.5 py-1 text-xs outline-none focus:border-emerald-500"
+            />
+            <span>s/d</span>
+            <input
+              type="date"
+              value={tempUntil}
+              onChange={(e) => setTempUntil(e.target.value)}
+              className="rounded border border-neutral-200 px-1.5 py-1 text-xs outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <Button
+            size="sm"
+            onClick={handleApplyFilter}
+            className="h-7 bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
+          >
+            <Filter className="mr-1.5 h-3 w-3" />
+            Filter
+          </Button>
+        </div>
       </div>
 
       {/* ERROR */}
@@ -118,8 +168,16 @@ const navigate = useNavigate();
         </div>
       )}
 
-      {/* EMPTY */}
-      {requests.length === 0 ? (
+      {/* LOADING */}
+      {loading ? (
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Memuat pengajuan...
+          </div>
+        </div>
+      ) : requests.length === 0 ? (
+        /* EMPTY */
         <Card className="border-neutral-200 bg-white shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-14 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
@@ -127,15 +185,14 @@ const navigate = useNavigate();
             </div>
 
             <p className="text-sm font-medium text-neutral-700">Belum ada pengajuan</p>
-
-            <p className="mt-1 text-xs text-neutral-400">Pengajuan transaksi yang kamu buat akan muncul di sini.</p>
+            <p className="mt-1 text-xs text-neutral-400">Tidak ada pengajuan pada rentang tanggal yang dipilih.</p>
           </CardContent>
         </Card>
       ) : (
+        /* LIST DATA */
         <div className="space-y-3">
           {requests.map((item) => {
             const status = getStatus(item.status);
-
             const StatusIcon = status.icon;
 
             return (
@@ -145,19 +202,15 @@ const navigate = useNavigate();
                     {/* LEFT */}
                     <div className="min-w-0">
                       <p className="text-xs text-neutral-400">{item.groupName || 'Group'}</p>
-
                       <p className="mt-1 text-sm font-semibold text-neutral-800">Pengajuan Pengeluaran</p>
-
                       <p className="mt-1 text-xs text-neutral-400">{formatDate(item.createdAt)}</p>
                     </div>
 
                     {/* RIGHT */}
                     <div className="shrink-0 text-right">
                       <p className="text-base font-bold text-red-500">- {formatCurrency(item.total)}</p>
-
                       <Badge variant="outline" className={`mt-1 gap-1 text-[10px] ${status.className}`}>
                         <StatusIcon className="h-3 w-3" />
-
                         {status.label}
                       </Badge>
                     </div>
@@ -167,7 +220,6 @@ const navigate = useNavigate();
                   {item.message && (
                     <div className="mt-4 rounded-lg bg-neutral-50 p-3">
                       <p className="text-[11px] text-neutral-400">Pesan</p>
-
                       <p className="mt-1 text-xs text-neutral-600">{item.message}</p>
                     </div>
                   )}
@@ -183,9 +235,7 @@ const navigate = useNavigate();
                   {item.status === 'REJECTED' && item.rejectionReason && (
                     <div className="mt-3 rounded-lg border border-red-100 bg-red-50 p-3">
                       <p className="text-[11px] font-medium text-red-500">Alasan penolakan</p>
-
                       <p className="mt-1 text-xs text-red-600">{item.rejectionReason}</p>
-
                       {item.rejectedByName && <p className="mt-1 text-[11px] text-red-400">Ditolak oleh {item.rejectedByName}</p>}
                     </div>
                   )}

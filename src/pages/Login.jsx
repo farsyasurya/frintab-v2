@@ -30,15 +30,26 @@ const Login = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setError('');
+
+    // 1. Ambil data langsung dari form element (mencegah isu autofill / async state)
+    const formData = new FormData(event.currentTarget);
+    const email = (formData.get('email') || form.email).trim();
+    const password = formData.get('password') || form.password;
+
+    // Validasi sederhana sebelum kirim request
+    if (!email || !password) {
+      setError('Email dan password wajib diisi.');
+      return;
+    }
 
     try {
       setLoading(true);
 
-      await signInWithEmailAndPassword(auth, form.email, form.password);
+      // 2. Kirim nilai yang sudah dipastikan terisi dan di-trim
+      await signInWithEmailAndPassword(auth, email, password);
 
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
 
@@ -48,19 +59,15 @@ const Login = () => {
         case 'auth/wrong-password':
           setError('Email atau password salah.');
           break;
-
         case 'auth/invalid-email':
           setError('Format email tidak valid.');
           break;
-
         case 'auth/too-many-requests':
           setError('Terlalu banyak percobaan login. Coba lagi nanti.');
           break;
-
         default:
           setError('Gagal login. Silakan coba lagi.');
       }
-    } finally {
       setLoading(false);
     }
   };

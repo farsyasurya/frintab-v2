@@ -10,8 +10,9 @@ import {
   limit,
   startAfter,
   endBefore,
+  Timestamp,
   limitToLast,
-  collectionGroup
+  collectionGroup,
 } from 'firebase/firestore';
 const PAGE_SIZE = 5;
 
@@ -438,6 +439,8 @@ export const getPendingTransactions = async (userUid) => {
     }
 
     const pendingTransactions = [];
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
 
     for (const groupDoc of groupSnapshot.docs) {
       const groupData = groupDoc.data();
@@ -446,35 +449,58 @@ export const getPendingTransactions = async (userUid) => {
 
       const transactionSnapshot = await getDocs(transactionQuery);
 
-      transactionSnapshot.forEach((transactionDoc) => {
+      for (const transactionDoc of transactionSnapshot.docs) {
         const transaction = transactionDoc.data();
 
-        const approvals = transaction.approvals || [];
+        // Ambil timestamp pembuat transaksi
+        const createdAtDate = transaction.createdAt?.toDate ? transaction.createdAt.toDate() : new Date(transaction.createdAt || now);
 
-        // Admin yang sudah approve tidak perlu
-        // melihat notif approval yang sama lagi
+        // Cek apakah transaksi sudah melebih 7 hari
+        const isExpired = now - createdAtDate.getTime() > SEVEN_DAYS_MS;
+
+        if (isExpired) {
+          // AUTO-REJECT ke Firestore jika sudah kadaluwarsa > 7 hari
+          const transactionRef = doc(db, 'groups', groupDoc.id, 'transactions', transactionDoc.id);
+
+          await runTransaction(db, async (t) => {
+            const snap = await t.get(transactionRef);
+            if (snap.exists() && snap.data().status === 'PENDING') {
+              t.update(transactionRef, {
+                status: 'REJECTED',
+                rejectionReason: 'Melewati batas tanggal',
+                rejectedBy: {
+                  adminId: 'SYSTEM',
+                  adminName: 'Sistem (Auto Expired)',
+                  rejectedAt: serverTimestamp(),
+                },
+                rejectedAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+              });
+            }
+          });
+
+          // Lewati transaksi ini agar tidak muncul di daftar pending admin
+          continue;
+        }
+
+        const approvals = transaction.approvals || [];
         const alreadyApproved = approvals.some((approval) => approval.adminId === userUid);
 
-        if (alreadyApproved) return;
+        if (alreadyApproved) continue;
 
         pendingTransactions.push({
           id: transactionDoc.id,
-
           ...transaction,
-
           groupId: groupDoc.id,
-
           groupName: groupData.name,
-
           groupCode: groupData.code,
         });
-      });
+      }
     }
 
     return pendingTransactions;
   } catch (error) {
     console.error('Get pending transactions error:', error);
-
     throw error;
   }
 };
@@ -515,22 +541,34 @@ export const getTransactionHistory = async ({ groupId, cursor = null, direction 
   };
 };
 
-export const getMyTransactionRequests = async (
-  uid
-) => {
+export const getMyTransactionRequests = async (uid, since = null, until = null) => {
   if (!uid) {
     throw new Error('User belum login.');
   }
 
+  // Set default 7 hari terakhir jika since/until tidak diisi
+  let startDate = since ? new Date(since) : new Date();
+  if (!since) {
+    startDate.setDate(startDate.getDate() - 7);
+  }
+  startDate.setHours(0, 0, 0, 0); // Mulai dari awal hari 00:00:00
+
+  let endDate = until ? new Date(until) : new Date();
+  endDate.setHours(23, 59, 59, 999); // Sampai akhir hari 23:59:59
+
+  const startTimestamp = Timestamp.fromDate(startDate);
+  const endTimestamp = Timestamp.fromDate(endDate);
+
   const transactionQuery = query(
     collectionGroup(db, 'transactions'),
     where('userId', '==', uid),
+    where('createdAt', '>=', startTimestamp),
+    where('createdAt', '<=', endTimestamp),
     orderBy('createdAt', 'desc'),
-    limit(50)
+    limit(50),
   );
 
-  const snapshot =
-    await getDocs(transactionQuery);
+  const snapshot = await getDocs(transactionQuery);
 
   return snapshot.docs.map((doc) => ({
     id: doc.id,

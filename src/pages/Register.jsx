@@ -144,7 +144,7 @@ const Register = () => {
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="Nama Lengkap"
                   value={form.name}
                   onChange={handleChange}
                   autoComplete="name"
