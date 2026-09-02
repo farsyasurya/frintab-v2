@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 
 import AddTransactionDialog from '@/components/AddTransactionDialog';
+import { TransactionSuccessDialog } from '@/components/TransactionSuccessDialog';
 import TransactionHistory from '@/components/TransactionHistory';
 
 const GroupDetail = () => {
@@ -21,6 +22,8 @@ const GroupDetail = () => {
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [transactionOpen, setTransactionOpen] = useState(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [successTransactionData, setSuccessTransactionData] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,9 +42,13 @@ const GroupDetail = () => {
     return Math.min(Math.round((Number(balance || 0) / Number(target)) * 100), 100);
   };
 
-  const fetchGroup = async () => {
+  const [historyKey, setHistoryKey] = useState(0);
+
+  const fetchGroup = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError('');
 
       // ================================
@@ -80,7 +87,9 @@ const GroupDetail = () => {
 
       setError(error.message || 'Gagal mengambil data group.');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -343,20 +352,27 @@ const GroupDetail = () => {
               )}
             </CardContent>
           </Card>
-          <div className="mt-4 ">
-          <TransactionHistory groupId={groupId} />
+          <div className="mt-4">
+            <TransactionHistory key={historyKey} groupId={groupId} />
           </div>
-
-
         </div>
       </main>
       <AddTransactionDialog
         open={transactionOpen}
         onOpenChange={setTransactionOpen}
         group={group}
-        onSuccess={() => {
-          fetchGroup();
+        onSuccess={(result) => {
+          fetchGroup(true);
+          setHistoryKey((prev) => prev + 1);
+          setSuccessTransactionData(result);
+          setSuccessDialogOpen(true);
         }}
+      />
+
+      <TransactionSuccessDialog
+        open={successDialogOpen}
+        onOpenChange={setSuccessDialogOpen}
+        data={successTransactionData}
       />
     </>
   );

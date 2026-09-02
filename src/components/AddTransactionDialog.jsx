@@ -1,14 +1,25 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
 import { createTransaction } from '@/service/transactionService';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -23,9 +34,7 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
   const { user } = useAuth();
 
   const [form, setForm] = useState(initialForm);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState('');
 
   const handleTotalChange = (event) => {
@@ -39,7 +48,6 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setError('');
 
     if (!form.total || Number(form.total) <= 0) {
@@ -72,13 +80,11 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
       console.log('Transaction created:', result);
 
       setForm(initialForm);
-
       onOpenChange(false);
 
       onSuccess?.(result);
     } catch (error) {
       console.error('Create transaction error:', error);
-
       setError(error.message || 'Gagal membuat transaksi.');
     } finally {
       setLoading(false);
@@ -101,12 +107,17 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
       <DialogContent className="rounded-2xl border-emerald-200/60 bg-white/95 p-6 backdrop-blur-xl shadow-2xl shadow-emerald-950/20 sm:max-w-md transition-all duration-300 animate-in fade-in-0 zoom-in-95">
         <DialogHeader className="space-y-1.5 text-left">
           {/* Icon Badge Top Header */}
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-lg text-emerald-700 shadow-inner">💸</div>
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-lg text-emerald-700 shadow-inner">
+            💸
+          </div>
 
-          <DialogTitle className="text-xl font-extrabold tracking-tight text-stone-800">Tambah Transaksi</DialogTitle>
+          <DialogTitle className="text-xl font-extrabold tracking-tight text-stone-800">
+            Tambah Transaksi
+          </DialogTitle>
 
           <DialogDescription className="text-xs font-medium text-stone-500">
-            Catat pemasukan atau pengeluaran untuk <strong className="text-emerald-800">{group?.name || 'group ini'}</strong>.
+            Catat pemasukan atau pengeluaran untuk{' '}
+            <strong className="text-emerald-800">{group?.name || 'group ini'}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -242,7 +253,7 @@ const AddTransactionDialog = ({ open, onOpenChange, group, onSuccess }) => {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" stroke="currentColor" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                   Menyimpan...
