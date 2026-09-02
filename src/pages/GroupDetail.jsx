@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Copy, CreditCard, Users, Wallet, Plus } from 'lucide-react';
+import { ArrowLeft, Copy, CreditCard, Users, Wallet, Plus, BarChart3 } from 'lucide-react';
 
 import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 
@@ -34,6 +34,24 @@ const GroupDetail = () => {
       currency: 'IDR',
       maximumFractionDigits: 0,
     }).format(Number(value) || 0);
+  };
+
+  const formatCompactNominal = (value) => {
+    const num = Number(value) || 0;
+    if (num === 0) return '0';
+    if (num >= 1_000_000_000) {
+      const val = (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',');
+      return `${val}m`;
+    }
+    if (num >= 1_000_000) {
+      const val = (num / 1_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',');
+      return `${val}jt`;
+    }
+    if (num >= 1_000) {
+      const val = (num / 1_000).toFixed(1).replace(/\.0$/, '').replace('.', ',');
+      return `${val}k`;
+    }
+    return num.toLocaleString('id-ID');
   };
 
   const getProgress = (balance, target) => {
@@ -71,15 +89,51 @@ const GroupDetail = () => {
       setGroup(groupData);
 
       // ================================
-      // GET MEMBERS
+      // GET MEMBERS & MEMBER BALANCES
       // ================================
 
       const membersSnapshot = await getDocs(collection(db, 'groups', groupId, 'members'));
+      let transactionsSnapshot = { docs: [] };
+      try {
+        transactionsSnapshot = await getDocs(collection(db, 'groups', groupId, 'transactions'));
+      } catch (err) {
+        console.warn('Could not fetch group transactions for balance aggregation:', err);
+      }
 
-      const membersData = membersSnapshot.docs.map((memberDoc) => ({
-        id: memberDoc.id,
-        ...memberDoc.data(),
-      }));
+      // Hitung saldo masing-masing user dari transaksi yang disetujui (APPROVED)
+      const balanceMap = {};
+      transactionsSnapshot.docs.forEach((tDoc) => {
+        const t = tDoc.data();
+        if (t.status === 'APPROVED') {
+          const uid = t.userId;
+          if (uid) {
+            if (balanceMap[uid] === undefined) balanceMap[uid] = 0;
+            if (t.type === 'INCOME') {
+              balanceMap[uid] += Number(t.total || 0);
+            } else if (t.type === 'EXPENSE') {
+              balanceMap[uid] -= Number(t.total || 0);
+            }
+          }
+        }
+      });
+
+      const membersData = membersSnapshot.docs.map((memberDoc) => {
+        const data = memberDoc.data();
+        const uid = data.uid || memberDoc.id;
+        const calculatedBalance = balanceMap[uid] !== undefined
+          ? Math.max(0, balanceMap[uid])
+          : (Number(data.balance) || 0);
+
+        return {
+          id: memberDoc.id,
+          uid,
+          ...data,
+          balance: calculatedBalance,
+        };
+      });
+
+      // Urutkan anggota berdasarkan saldo tertinggi ke terendah
+      membersData.sort((a, b) => (Number(b.balance) || 0) - (Number(a.balance) || 0));
 
       setMembers(membersData);
     } catch (error) {
@@ -148,6 +202,9 @@ const GroupDetail = () => {
   const progress = getProgress(group.balance, group.target);
 
   const payment = group.payment || {};
+
+  const maxMemberBalance = Math.max(...members.map((m) => Number(m.balance) || 0), 0);
+  const totalMembersBalance = members.reduce((sum, m) => sum + (Number(m.balance) || 0), 0);
 
   return (
     <>
@@ -352,6 +409,114 @@ const GroupDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Horizontal Bar Chart Section: Saldo Anggota Group */}
+          <Card className="mt-4 border-emerald-200 shadow-sm bg-white overflow-hidden">
+            <CardHeader className="pb-3 pt-4 border-b border-emerald-50 bg-gradient-to-r from-emerald-50/70 via-white to-amber-50/50">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold text-neutral-800">
+                    <BarChart3 className="h-4 w-4 text-emerald-600" />
+                    Grafik Saldo Anggota
+                  </CardTitle>
+                  <CardDescription className="text-[11px] text-neutral-500">
+                    Perbandingan kontribusi saldo tabungan per anggota group
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                  <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-[11px] font-semibold text-emerald-800">
+                    {members.length} Anggota
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-4 pb-4">
+              {members.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-emerald-200 py-8 text-center text-xs text-neutral-400">
+                  Belum ada data anggota untuk ditampilkan.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {members.map((member, index) => {
+                    const balance = Number(member.balance) || 0;
+                    const barWidth = maxMemberBalance > 0 && balance > 0
+                      ? Math.max(Math.round((balance / maxMemberBalance) * 100), 4)
+                      : 0;
+                    const sharePercent = totalMembersBalance > 0
+                      ? Math.round((balance / totalMembersBalance) * 100)
+                      : 0;
+
+                    return (
+                      <div
+                        key={member.id || member.uid || index}
+                        className="group rounded-xl border border-neutral-100 bg-neutral-50/40 p-3 transition-all hover:border-emerald-200 hover:bg-emerald-50/20"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
+                          {/* Member info (Avatar & Name) */}
+                          <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:w-48 lg:w-56 shrink-0 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-gradient-to-br from-emerald-100 to-teal-100 text-[11px] font-bold text-emerald-800 shadow-2xs">
+                                {(member.name || member.uid || 'U').slice(0, 2).toUpperCase()}
+                                {index === 0 && balance > 0 && (
+                                  <span className="absolute -top-1 -right-1 text-[10px]" title="Kontributor Terbanyak">
+                                    👑
+                                  </span>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-semibold text-neutral-800" title={member.name || member.uid}>
+                                  {member.name || member.uid}
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-[10px] text-neutral-400">
+                                    {member.role === 'ADMIN' ? 'Admin' : 'Anggota'}
+                                  </span>
+                                  {totalMembersBalance > 0 && balance > 0 && (
+                                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-100/70 px-1 rounded">
+                                      {sharePercent}%
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Mobile-only nominal badge */}
+                            <div className="sm:hidden text-right">
+                              <span className="inline-flex items-center font-bold text-xs text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                Rp {formatCompactNominal(balance)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Horizontal Bar */}
+                          <div className="flex-1 min-w-0">
+                            <div className="h-3 sm:h-3.5 w-full rounded-full bg-neutral-200/70 p-0.5 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 transition-all duration-700 ease-out"
+                                style={{ width: `${barWidth}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Desktop Nominal & Full Currency */}
+                          <div className="hidden sm:flex sm:flex-col sm:items-end sm:w-32 shrink-0">
+                            <span className="inline-flex items-center font-bold text-xs sm:text-sm text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                              Rp {formatCompactNominal(balance)}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 mt-0.5 font-medium" title={formatCurrency(balance)}>
+                              {formatCurrency(balance)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="mt-4">
             <TransactionHistory key={historyKey} groupId={groupId} />
           </div>
