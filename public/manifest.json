@@ -1,0 +1,24 @@
+{
+  "name": "Frintab",
+  "short_name": "Frintab",
+  "description": "Aplikasi Pengelola Keuangan & Transaksi Frintab",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#eab308",
+  "icons": [
+    {
+      "src": "/frintab.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/frintab.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

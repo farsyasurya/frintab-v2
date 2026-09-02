@@ -562,6 +562,7 @@ export const getMyTransactionRequests = async (uid, since = null, until = null) 
   const transactionQuery = query(
     collectionGroup(db, 'transactions'),
     where('userId', '==', uid),
+    where('type', '==', 'EXPENSE'),
     where('createdAt', '>=', startTimestamp),
     where('createdAt', '<=', endTimestamp),
     orderBy('createdAt', 'desc'),
