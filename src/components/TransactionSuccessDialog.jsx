@@ -61,9 +61,8 @@ export function TransactionSuccessDialog({ open, onOpenChange, data }) {
           <div className="relative flex items-center justify-center pt-2">
             {/* Ambient Background Glow */}
             <div
-              className={`absolute h-44 w-44 rounded-full blur-2xl animate-pulse ${
-                isIncome ? 'bg-emerald-400/30' : 'bg-amber-400/30'
-              }`}
+              className={`absolute h-44 w-44 rounded-full blur-2xl animate-pulse ${isIncome ? 'bg-emerald-400/30' : 'bg-amber-400/30'
+                }`}
             />
 
             {/* Confetti particles */}
@@ -76,13 +75,12 @@ export function TransactionSuccessDialog({ open, onOpenChange, data }) {
             <span className="confetti-burst bg-teal-400" style={{ '--tx': '55px', '--ty': '8px' }} />
 
             {/* Cat Mascot Frame (Enlarged & Zoomed In) */}
-            <div className="cat-badge-container relative flex h-36 w-36 items-center justify-center">
+            <div className="cat-badge-container relative flex h-40 w-40 items-center justify-center">
               <div
-                className={`relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-4 ${
-                  isIncome
-                    ? 'border-emerald-300 bg-gradient-to-b from-emerald-50 to-emerald-100/70 shadow-xl shadow-emerald-500/25'
-                    : 'border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/70 shadow-xl shadow-amber-500/25'
-                }`}
+                className={`relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-4 ${isIncome
+                  ? 'border-emerald-300 bg-gradient-to-b from-emerald-50 to-emerald-100/70 shadow-xl shadow-emerald-500/25'
+                  : 'border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/70 shadow-xl shadow-amber-500/25'
+                  }`}
               >
                 <img
                   src="/kuc.jpeg"
@@ -93,9 +91,8 @@ export function TransactionSuccessDialog({ open, onOpenChange, data }) {
 
               {/* Status Badge Icon */}
               <div
-                className={`absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow-md ${
-                  isIncome ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
-                }`}
+                className={`absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow-md ${isIncome ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                  }`}
               >
                 {isIncome ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
               </div>
@@ -105,11 +102,10 @@ export function TransactionSuccessDialog({ open, onOpenChange, data }) {
           {/* Amount Chip */}
           {data.total ? (
             <div
-              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold tracking-wide shadow-sm ${
-                isIncome
-                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  : 'bg-amber-100 text-amber-800 border border-amber-200'
-              }`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold tracking-wide shadow-sm ${isIncome
+                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                }`}
             >
               <Sparkles className="h-3 w-3" />
               <span>
@@ -136,11 +132,10 @@ export function TransactionSuccessDialog({ open, onOpenChange, data }) {
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
-            className={`w-full h-11 rounded-xl font-bold text-white shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${
-              isIncome
-                ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25'
-                : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'
-            }`}
+            className={`w-full h-11 rounded-xl font-bold text-white shadow-md transition-all duration-200 hover:shadow-lg active:scale-95 ${isIncome
+              ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25'
+              : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'
+              }`}
           >
             Oke, Mengerti
           </Button>
