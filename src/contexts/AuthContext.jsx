@@ -34,17 +34,13 @@ useEffect(() => {
         return;
       }
 
-      // 1. Langsung set user dari Firebase Auth agar router menyadari user sudah terautentikasi
-      setUser(currentUser);
-      setLoading(false); // Router bisa langsung izinkan akses ke '/' tanpa menunggu Firestore!
-
       try {
-        // 2. Fetch data Firestore di background
+        // Fetch data profil Firestore (role, nama, dsb.)
         const userRef = doc(db, 'users', currentUser.uid);
         const userSnapshot = await getDoc(userRef);
         const profile = userSnapshot.exists() ? userSnapshot.data() : {};
 
-        // 3. Update state user dengan gabungan data Firestore saat fetch selesai
+        // Update state user dengan gabungan data Firebase Auth & Firestore
         setUser({
           ...currentUser,
           ...profile,
@@ -54,6 +50,9 @@ useEffect(() => {
         });
       } catch (error) {
         console.error('Get user profile error:', error);
+        setUser(currentUser);
+      } finally {
+        setLoading(false);
       }
     }
   );

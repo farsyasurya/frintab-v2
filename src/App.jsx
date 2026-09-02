@@ -8,9 +8,13 @@ import Notifications from '@/pages/Notifications';
 import DashboardLayout from '@/components/DashboardLayout';
 import PengajuanMe from '@/pages/PengajuanMe';
 import Profile from '@/pages/Profile';
+import SuperAdmin from '@/pages/SuperAdmin';
 
+import Helpdesk from '@/pages/Helpdesk';
 import ProtectedRoute from '@/components/ProtectedRoute';
-
+import AdminHelpdesk from '@/pages/AdminHelpdesk';
+import HelpdeskDetail from '@/pages/HelpdeskDetail';
+import AdminHelpdeskDetail from '@/pages/AdminHelpdeskDetail';
 function App() {
   return (
     <BrowserRouter>
@@ -49,6 +53,14 @@ function App() {
             }
           />
           <Route
+            path="/notifikasi"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/pengajuan-me"
             element={
               <ProtectedRoute>
@@ -65,6 +77,47 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+            <Route
+              path="/helpdesk/:ticketId"
+              element={
+                <ProtectedRoute>
+                  <HelpdeskDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/helpdesk/:ticketId"
+              element={
+                <ProtectedRoute>
+                  <AdminHelpdeskDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/helpdesk"
+              element={
+                <ProtectedRoute>
+                  <Helpdesk />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/helpdesk"
+              element={
+                <ProtectedRoute>
+                  <AdminHelpdesk />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin"
+              element={
+                <ProtectedRoute>
+                  <SuperAdmin />
+                </ProtectedRoute>
+              }
+            />
         </Route>
       </Routes>
     </BrowserRouter>

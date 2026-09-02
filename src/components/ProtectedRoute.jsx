@@ -1,5 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAuth, signOut } from 'firebase/auth';
+import Swal from 'sweetalert2';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -30,6 +32,23 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Suspended account handling
+  if (user?.suspended) {
+    const auth = getAuth();
+    signOut(auth).catch(console.error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Akun Nonaktif',
+      text: 'Akun Anda telah disuspend. Silakan hubungi admin.',
+      confirmButtonText: 'Ke Helpdesk',
+    }).then(() => {
+      // Redirect to helpdesk after user acknowledges
+      window.location.href = '/helpdesk';
+    });
+    // Render nothing while redirect occurs
+    return null;
   }
 
   return children;

@@ -4,9 +4,13 @@ import { useEffect, useState, useRef } from 'react';
 import packageJson from '../../package.json';
 
 import { getPendingTransactions } from '@/service/transactionService';
+import {
+  subscribeUserUnreadTickets,
+  subscribeAdminUnreadTickets,
+} from '@/service/helpdeskService';
 import { THEME } from '@/components/CholorPerGender';
 
-import { LayoutDashboard, List, UserCircle, Search, HelpCircle, Bell, Menu, LogOut, ChevronDown, Sprout, Gem } from 'lucide-react';
+import { LayoutDashboard, List, UserCircle, Search, HelpCircle, Bell, Menu, LogOut, ChevronDown, Sprout, Gem, ShieldCheck, LifeBuoy } from 'lucide-react';
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -14,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'pengajuan-me', label: 'Pengajuan Saya', icon: List, path: '/pengajuan-me' },
   { key: 'notifications', label: 'Notifikasi', icon: Bell, path: '/notifications' },
   { key: 'profile', label: 'Profile', icon: UserCircle, path: '/profile' },
+  { key: 'helpdesk', label: 'Helpdesk', icon: LifeBuoy, path: '/helpdesk' },
 ];
 
 const DashboardLayout = () => {
@@ -21,9 +26,46 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isSuperAdmin = Boolean(
+    user?.uid === 'sExbRFMPzIgQPhDAmhIT3eFSEkl1' ||
+    user?.id === 'sExbRFMPzIgQPhDAmhIT3eFSEkl1' ||
+    user?.role === 'SUPERADMIN' ||
+    user?.userCode === 'sExbRFMPzIgQPhDAmhIT3eFSEkl1' ||
+    user?.email?.startsWith('sExbRFMPzIgQPhDAmhIT3eFSEkl1')
+  );
+
+  const isAdmin = Boolean(
+    user?.role?.includes('ADMIN') || user?.role === 'ADMIN' || isSuperAdmin
+  );
+
+  const navItems = [
+    ...NAV_ITEMS,
+    // Admin Helpdesk menu – visible for users with ADMIN or SUPERADMIN role
+    ...(isAdmin
+      ? [{
+        key: 'admin-helpdesk',
+        label: 'Admin Helpdesk',
+        icon: LifeBuoy,
+        path: '/admin/helpdesk',
+        isSpecial: true,
+      }]
+      : []),
+    // Super Admin extra menu
+    ...(isSuperAdmin
+      ? [{
+        key: 'superadmin',
+        label: 'Super Admin',
+        icon: ShieldCheck,
+        path: '/superadmin',
+        isSpecial: true,
+      }]
+      : []),
+  ];
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [helpdeskUnreadCount, setHelpdeskUnreadCount] = useState(0);
 
   const userMenuRef = useRef(null);
 
@@ -32,7 +74,7 @@ const DashboardLayout = () => {
 
     try {
       const data = await getPendingTransactions(user.uid);
-      setPendingCount(data.length);
+      setPendingCount(data?.length || 0);
     } catch (error) {
       console.error('Get pending count error:', error);
     }
@@ -49,7 +91,33 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     fetchPendingCount();
-  }, [user?.uid]);
+  }, [user?.uid, location.pathname]);
+
+  // Real-time subscription to helpdesk unread messages
+  useEffect(() => {
+    if (!user?.uid) return;
+    let unsub;
+    if (isAdmin) {
+      unsub = subscribeAdminUnreadTickets((unread) => {
+        setHelpdeskUnreadCount(unread.length);
+      });
+    } else {
+      unsub = subscribeUserUnreadTickets(user.uid, (unread) => {
+        setHelpdeskUnreadCount(unread.length);
+      });
+    }
+    return () => unsub?.();
+  }, [user?.uid, isAdmin]);
+
+  const totalNotificationCount = pendingCount + helpdeskUnreadCount;
+
+  // Helper to determine badge count per nav item
+  const getBadgeCount = (itemKey) => {
+    if (itemKey === 'notifications') return totalNotificationCount;
+    if (itemKey === 'helpdesk' && !isAdmin) return helpdeskUnreadCount;
+    if (itemKey === 'admin-helpdesk' && isAdmin) return helpdeskUnreadCount;
+    return 0;
+  };
 
   // Pilih tema berdasarkan gender
   const themeKey = user?.gender === 'FEMALE' ? 'pink' : 'emerald';
@@ -75,9 +143,8 @@ const DashboardLayout = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 shrink-0 transform ${theme.sidebarBg} transition-transform duration-300 lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 w-64 shrink-0 transform ${theme.sidebarBg} transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
@@ -97,8 +164,9 @@ const DashboardLayout = () => {
 
           {/* Nav */}
           <nav className="flex-1 space-y-1 px-3">
-            {NAV_ITEMS.map(({ key, label, icon: Icon, path }) => {
-              const isActive = location.pathname.startsWith(path);
+            {navItems.map(({ key, label, icon: Icon, path, isSpecial }) => {
+              const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+              const badgeCount = getBadgeCount(key);
 
               return (
                 <button
@@ -107,12 +175,31 @@ const DashboardLayout = () => {
                     navigate(path);
                     setSidebarOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive ? theme.navActive : theme.navInactive
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
+                    ? isSpecial
+                      ? 'bg-amber-500/30 text-amber-300 font-bold'
+                      : theme.navActive
+                    : isSpecial
+                      ? 'text-amber-400 hover:bg-amber-500/10'
+                      : theme.navInactive
+                    }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {label}
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{label}</span>
+                  </div>
+
+                  {badgeCount > 0 && (
+                    <span
+                      className={`inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-bold rounded-full min-w-[20px] shadow-sm ${
+                        isSpecial
+                          ? 'bg-amber-400 text-neutral-900'
+                          : 'bg-amber-500 text-white'
+                      }`}
+                    >
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -167,12 +254,13 @@ const DashboardLayout = () => {
             <button
               onClick={() => navigate('/notifications')}
               className="relative rounded-full p-2 text-neutral-500 transition-colors hover:bg-neutral-100"
+              title="Notifikasi"
             >
               <Bell className="h-5 w-5" />
 
-              {pendingCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
-                  {pendingCount > 99 ? '99+' : pendingCount}
+              {totalNotificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
+                  {totalNotificationCount > 99 ? '99+' : totalNotificationCount}
                 </span>
               )}
             </button>
@@ -218,3 +306,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+
