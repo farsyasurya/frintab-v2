@@ -154,8 +154,8 @@ const HelpdeskDetail = () => {
   const dayGroups = groupByDay(thread);
 
   return (
-    <div className="min-h-screen bg-white flex justify-center">
-      <div className="w-full max-w-2xl flex flex-col h-screen border-x border-slate-200">
+    <div className="min-h-[85vh] bg-white flex justify-center">
+      <div className="w-full max-w-2xl flex flex-col h-[85vh] border-x border-slate-200">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 bg-emerald-700 text-white shadow-sm">
           <button
